@@ -43,11 +43,12 @@ export default function TemplateStudio() {
     const fd = new FormData();
     fd.append("file", file);
     const taskId = form.getFieldValue("task_id");
+    const url = taskId ? `/api/templates/upload-base?task_id=${encodeURIComponent(taskId)}` : "/api/templates/upload-base";
     if (taskId) {
       fd.append("task_id", taskId);
     }
     try {
-      const res = await fetch("/api/templates/upload-base", {
+      const res = await fetch(url, {
         method: "POST",
         body: fd
       });

@@ -1,7 +1,7 @@
 templates:
   log_button:
     click:
-      mode: random
+      mode: center
       padding:
         bottom: 0.0
         left: 0.0
@@ -13,10 +13,31 @@ templates:
       method: TM_CCOEFF_NORMED
       threshold: 0.85
     search_region:
-      height: 0.03886255924170616
+      height: 0.07881136950904392
       type: relative
-      width: 0.1789228379078198
-      x: 0.005092352675008749
-      y: 0.10884675663229414
+      width: 0.3785310734463277
+      x: 0.012669063189976265
+      y: 0.1406115352029332
+    task_id: click_log_button
+    type: click
+  test_button:
+    click:
+      mode: center
+      padding:
+        bottom: 0.0
+        left: 0.0
+        right: 0.0
+        top: 0.0
+    description: ''
+    file: images/test_button.png
+    match:
+      method: TM_CCOEFF_NORMED
+      threshold: 0.85
+    search_region:
+      height: 0.04454976303317536
+      type: relative
+      width: 0.18228896944588296
+      x: 0.003797686698830603
+      y: 0.10458135378869224
     task_id: click_log_button
     type: click

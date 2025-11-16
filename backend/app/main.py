@@ -15,6 +15,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.append(str(ROOT_DIR))
 
 from engine import config as engine_config
+from engine.logging import log_store
 
 from .api import logs, tasks, templates, windows
 
@@ -37,6 +38,13 @@ app.add_middleware(
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.on_event("startup")
+async def startup():
+    # Clear in-memory logs and refresh tasks cache from disk on each start.
+    log_store.clear()
+    tasks.refresh_tasks_cache()
 
 
 frontend_dir: Path = engine_config.get_frontend_dir()

@@ -1,5 +1,14 @@
 [
   {
+    "id": "example",
+    "name": "示例任务",
+    "script": "main.py",
+    "entry": "MainTask",
+    "path": "F:\\各类脚本\\2025.11.15-自动点击脚本\\WinAutoClick\\WinAutoClick\\tasks\\example",
+    "templates_path": "F:\\各类脚本\\2025.11.15-自动点击脚本\\WinAutoClick\\WinAutoClick\\tasks\\example\\templates.yaml",
+    "target_window": {}
+  },
+  {
     "id": "click_log_button",
     "name": "窗口点击-1",
     "script": "main.py",
@@ -7,9 +16,9 @@
     "path": "F:\\各类脚本\\2025.11.15-自动点击脚本\\WinAutoClick\\WinAutoClick\\tasks\\click_log_button",
     "templates_path": "F:\\各类脚本\\2025.11.15-自动点击脚本\\WinAutoClick\\WinAutoClick\\tasks\\click_log_button\\templates.yaml",
     "target_window": {
-      "title_contains": "WinAutoClick - 个人 - Microsoft​ Edge",
+      "title_contains": "WinAutoClick 和另外 2 个页面 - 个人 - Microsoft​ Edge",
       "process_name": "msedge.exe",
-      "hwnd": 11275772
+      "hwnd": null
     }
   }
 ]

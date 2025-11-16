@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import random
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -137,8 +138,10 @@ def template_from_definition(key: str, definition: Dict, assets_dir: Path | None
     )
 
 
-def load_templates(config_path: Path | None = None) -> Dict[str, Template]:
-    path = config_path or get_templates_config_path()
+def load_templates(config_path: Path | str | os.PathLike | None = None) -> Dict[str, Template]:
+    if config_path and not isinstance(config_path, Path):
+        config_path = Path(config_path)
+    path: Path = config_path or get_templates_config_path()
     if not path.exists():
         return {}
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}

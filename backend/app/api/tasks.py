@@ -54,6 +54,32 @@ def _write_tasks(tasks: List[Dict]) -> None:
     TASKS_PATH.write_text(json.dumps(tasks, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def _merge_with_disk(tasks: List[Dict]) -> bool:
+    """
+    Merge tasks.json entries with tasks discovered under tasks/*/task.yaml.
+    Returns True if tasks list was mutated.
+    """
+    changed = False
+    seen_ids = {t.get("id") for t in tasks}
+    for t in _discover_tasks_from_disk():
+        if t.get("id") not in seen_ids:
+            tasks.append(t)
+            seen_ids.add(t.get("id"))
+            changed = True
+    return changed
+
+
+def refresh_tasks_cache() -> List[Dict]:
+    """
+    Load tasks.json, merge disk tasks, persist when new ones are found,
+    and return the merged list. Safe to call at startup and before listing/running.
+    """
+    tasks = _load_tasks()
+    if _merge_with_disk(tasks):
+        _write_tasks(tasks)
+    return tasks
+
+
 def _discover_tasks_from_disk() -> List[Dict]:
     """Scan tasks/ directory for task.yaml to enrich the list even if tasks.json is empty."""
     results: List[Dict] = []
@@ -86,12 +112,7 @@ def _discover_tasks_from_disk() -> List[Dict]:
 
 @router.get("/", response_model=TaskListResponse)
 def list_tasks():
-    tasks = _load_tasks()
-    seen_ids = {t["id"] for t in tasks}
-    # merge disk-discovered tasks
-    for t in _discover_tasks_from_disk():
-        if t["id"] not in seen_ids:
-            tasks.append(t)
+    tasks = refresh_tasks_cache()
     enriched = []
     for t in tasks:
         task_dir = Path(t.get("path") or engine_config.get_tasks_root() / t["id"])
@@ -174,13 +195,10 @@ def save_task(task: TaskDefinitionModel):
 
 @router.post("/{task_id}/run")
 def run_task(task_id: str):
-    tasks = _load_tasks()
+    tasks = refresh_tasks_cache()
     target = next((t for t in tasks if t["id"] == task_id), None)
     if not target:
         raise HTTPException(status_code=404, detail="任务不存在")
-    # 必须预先绑定窗口
-    if not target.get("target_window") or not target["target_window"].get("hwnd"):
-        raise HTTPException(status_code=400, detail="请先在任务中绑定窗口（target_window.hwnd）再运行")
 
     task_dir = Path(target.get("path") or engine_config.get_tasks_root() / target["id"])
     task_yaml = task_dir / "task.yaml"
@@ -207,6 +225,12 @@ def run_task(task_id: str):
     )
     executor.run_task(task_def)
     return {"status": "started"}
+@router.post("/{task_id}/stop")
+def stop_task(task_id: str):
+    stopped = executor.stop_task(task_id)
+    if not stopped:
+        raise HTTPException(status_code=404, detail="task not running")
+    return {"status": "stopping"}
 
 
 @router.get("/{task_id}/script")

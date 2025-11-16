@@ -5,9 +5,10 @@ import { TaskDefinition, WindowInfo } from "../types";
 
 interface Props {
   onRun: (taskId: string) => void;
+  onStop: (taskId: string) => void;
 }
 
-export default function TaskManager({ onRun }: Props) {
+export default function TaskManager({ onRun, onStop }: Props) {
   const [tasks, setTasks] = useState<TaskDefinition[]>([]);
   const [open, setOpen] = useState(false);
   const [form] = Form.useForm<TaskDefinition>();
@@ -131,6 +132,9 @@ export default function TaskManager({ onRun }: Props) {
               </a>,
               <a key="run" onClick={() => ensureWindowAndRun(item)}>
                 运行
+              </a>,
+              <a key="stop" onClick={() => onStop(item.id)}>
+                停止
               </a>,
             ]}
           >

@@ -13,6 +13,10 @@ export default function App() {
     await apiPost(`/tasks/${taskId}/run`);
     message.success("任务已启动");
   }
+  async function handleStop(taskId: string) {
+    await apiPost(`/tasks/${taskId}/stop`);
+    message.success("已发送停止信号");
+  }
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
@@ -23,7 +27,7 @@ export default function App() {
             {
               key: "tasks",
               label: "任务管理",
-              children: <TaskManager onRun={handleRun} />
+              children: <TaskManager onRun={handleRun} onStop={handleStop} />
             },
             {
               key: "windows",

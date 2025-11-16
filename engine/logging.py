@@ -20,6 +20,10 @@ class LogStore:
         self._records: List[LogRecord] = []
         self._lock = threading.Lock()
 
+    def clear(self) -> None:
+        with self._lock:
+            self._records = []
+
     def append(self, record: LogRecord) -> None:
         with self._lock:
             self._records.append(record)

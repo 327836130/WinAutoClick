@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Dict, Optional, Tuple
 
 import yaml
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from fastapi.responses import Response
 from PIL import Image
 
@@ -114,7 +114,7 @@ def save_template(request: SaveTemplateRequest):
 
 
 @router.post("/upload-base")
-def upload_base(task_id: Optional[str] = None, file: UploadFile = File(...)):
+def upload_base(task_id: Optional[str] = Form(None), file: UploadFile = File(...)):
     base_dir = engine_config.get_images_dir() / "base_uploads"
     if task_id:
         base_dir = engine_config.get_tasks_root() / task_id / "images"

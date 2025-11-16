@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import importlib
+import inspect
+import threading
 import time
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -21,13 +23,27 @@ class TaskBase:
         self,
         target_window: Optional[TargetWindowConfig] = None,
         template_config_path: Optional[Path] = None,
+        task_id: Optional[str] = None,
     ) -> None:
+        if template_config_path is None:
+            template_config_path = self._infer_template_path_from_module()
+        self.task_id = task_id
         self.target_window_config = target_window
         self.hwnd: Optional[int] = None
         self.template_config_path = template_config_path
         self.templates: Dict[str, Template] = load_templates(template_config_path)
         self._last_image: Optional[Image.Image] = None
         self._input = InputController(self._get_window_rect)
+        self._stop_event = threading.Event()
+
+    def _infer_template_path_from_module(self) -> Optional[Path]:
+        """Try to locate templates.yaml next to the task script when not provided."""
+        module = inspect.getmodule(self.__class__)
+        module_file = getattr(module, "__file__", None) if module else None
+        if not module_file:
+            return None
+        candidate = Path(module_file).parent / "templates.yaml"
+        return candidate if candidate.exists() else None
 
     # Window helpers
     def _ensure_hwnd(self) -> Optional[int]:
@@ -48,6 +64,8 @@ class TaskBase:
         return get_window_rect(hwnd)
 
     def ensure_window_focused(self) -> None:
+        if not self.target_window_config:
+            return
         hwnd = self._ensure_hwnd()
         if not hwnd:
             raise RuntimeError("Target window not found")
@@ -63,7 +81,19 @@ class TaskBase:
 
     def resolve_template(self, template_or_key) -> Template:
         # Always reload templates to reflect latest edits
-        self.templates = load_templates(self.template_config_path)
+        cfg_path = self.template_config_path
+        if not cfg_path or (isinstance(cfg_path, Path) and not cfg_path.exists()):
+            inferred = self._infer_template_path_from_module()
+            if inferred:
+                cfg_path = inferred
+                self.template_config_path = inferred
+        self.templates = load_templates(cfg_path)
+        # debug: log which config is used for matching
+        try:
+            path_str = str(cfg_path) if cfg_path else "(default assets)"
+            self.log(f"加载模板配置: {path_str}", level="INFO")
+        except Exception:
+            pass
         if isinstance(template_or_key, Template):
             return template_or_key
         key = str(template_or_key)
@@ -89,6 +119,8 @@ class TaskBase:
     def wait_appear(self, template_or_key, timeout: float = 10, interval: float = 0.5, threshold: Optional[float] = None) -> bool:
         start = time.time()
         while time.time() - start <= timeout:
+            if self.should_stop():
+                return False
             if self.appear(template_or_key, threshold=threshold):
                 return True
             time.sleep(interval)
@@ -98,6 +130,8 @@ class TaskBase:
     def disappear(self, template_or_key, timeout: float = 10, interval: float = 0.5) -> bool:
         start = time.time()
         while time.time() - start <= timeout:
+            if self.should_stop():
+                return False
             if not self.appear(template_or_key):
                 return True
             time.sleep(interval)
@@ -137,7 +171,13 @@ class TaskBase:
         time.sleep(sec)
 
     def log(self, msg: str, level: str = "INFO") -> None:
-        log_store.log(msg, level=level, task_id=self.__class__.__name__)
+        log_store.log(msg, level=level, task_id=self.task_id or self.__class__.__name__)
+
+    def request_stop(self) -> None:
+        self._stop_event.set()
+
+    def should_stop(self) -> bool:
+        return self._stop_event.is_set()
 
     # Entry point to override
     def run(self, context: Optional[Dict[str, Any]] = None) -> None:
