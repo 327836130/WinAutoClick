@@ -79,21 +79,13 @@ def find_window(config: TargetWindowConfig) -> Optional[int]:
 
 def activate_window(hwnd: int) -> None:
     """
-    Bring window to foreground without changing size.
-    Only call SetForegroundWindow; preserve current window state (normal/最大化/最小化).
+    Bring window to foreground without forcing resize/restore.
+    Only call SetForegroundWindow; if minimized, skip to avoid size changes.
     """
     try:
-        placement = win32gui.GetWindowPlacement(hwnd)
-        show_cmd = placement[1]  # 1: normal, 2: minimized, 3: maximized
-        # 如果最小化，保持最小化状态，不做前置以免还原尺寸
-        if show_cmd == win32con.SW_SHOWMINIMIZED:
+        if win32gui.IsIconic(hwnd):  # minimized
             return
         ctypes.windll.user32.SetForegroundWindow(hwnd)
-        # 前置后重新应用原 show_cmd（如最大化保持最大化）
-        if show_cmd == win32con.SW_SHOWMAXIMIZED:
-            win32gui.ShowWindow(hwnd, win32con.SW_SHOWMAXIMIZED)
-        elif show_cmd == win32con.SW_SHOWNORMAL:
-            win32gui.ShowWindow(hwnd, win32con.SW_SHOWNORMAL)
     except Exception:
         pass
 

@@ -1,0 +1,6 @@
+id: example
+name: 示例任务
+script: main.py
+entry: MainTask
+templates: templates.yaml
+target_window: {}

@@ -98,6 +98,14 @@ def _padding_from_dict(data: Dict) -> ClickPadding:
 
 
 def template_from_definition(key: str, definition: Dict, assets_dir: Path | None = None) -> Template:
+    """
+    Resolve template config to Template instance.
+
+    If file is absolute, keep it; otherwise always resolve relative to the
+    templates.yaml directory (assets_dir). The previous behavior forced
+    paths like images/foo.png back to the global assets dir, causing task
+    templates to ignore updated images in their own folders.
+    """
     assets_dir = assets_dir or get_images_dir()
     clazz = definition.get("type", "click").lower()
     cls_map = {
@@ -113,12 +121,9 @@ def template_from_definition(key: str, definition: Dict, assets_dir: Path | None
     if raw_file.is_absolute():
         file_path = raw_file
     else:
-        # 如果配置里已经包含 images/ 前缀，说明是相对于 assets 根目录的路径
-        if len(raw_file.parts) > 0 and raw_file.parts[0] == "images":
-            file_path = get_assets_dir() / raw_file
-        else:
-            # 仅文件名时默认放在 assets/images 下
-            file_path = Path(assets_dir) / raw_file
+        # Always resolve relative to the templates.yaml folder (assets_dir)
+        # so per-task images (tasks/<id>/images/xxx.png) are respected.
+        file_path = Path(assets_dir) / raw_file
     padding = _padding_from_dict(definition.get("click", {}).get("padding", {})) if definition.get("click") else ClickPadding()
     return cls(
         key=key,

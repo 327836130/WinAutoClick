@@ -1,0 +1,22 @@
+templates:
+  log_button:
+    click:
+      mode: random
+      padding:
+        bottom: 0.0
+        left: 0.0
+        right: 0.0
+        top: 0.0
+    description: ''
+    file: images/log_button.png
+    match:
+      method: TM_CCOEFF_NORMED
+      threshold: 0.85
+    search_region:
+      height: 0.03886255924170616
+      type: relative
+      width: 0.1789228379078198
+      x: 0.005092352675008749
+      y: 0.10884675663229414
+    task_id: click_log_button
+    type: click
