@@ -1,0 +1,11 @@
+fastapi==0.110.0
+uvicorn[standard]==0.29.0
+pydantic==1.10.14
+pyautogui==0.9.54
+opencv-python==4.9.0.80
+Pillow==10.3.0
+pywin32==306
+psutil==5.9.8
+PyYAML==6.0.1
+numpy==1.26.4
+python-multipart==0.0.9
